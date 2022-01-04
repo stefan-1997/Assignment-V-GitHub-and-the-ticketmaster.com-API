@@ -10,29 +10,66 @@ output:
 
 I hereby confirm that I worked on this Assignment entirely on my own and that my submission is in line with the *Code of Conduct* outlined on the lecture slides.
 
+
 ## 1. Setting up a new GitHub repository
 
-Text
+After having registered on [GitHub](https://github.com), I initialized a new public repository for this assignment called [Assignment V GitHub and the ticketmaster.com API](https://github.com/stefan-1997/Assignment-V-GitHub-and-the-ticketmaster.com-API). For version control, I relied on the [Sourcetree GUI](https://www.sourcetreeapp.com/) for a convenient representation of the development history. To finally start over with the assignment, I cloned the Git repository to my local computer and pulled the latest version of the project (consisting of the *README.md* and the *.gitignore* file).
 
 
 ## 2. Getting to know the API
 
-Text
+As a first step, I cleaned my environment and loaded the relevant packages.
 
 ```{r start, error = FALSE, warning = FALSE, message = FALSE}
 
+rm(list = ls())
 
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(maps)
+library(dplyr)
+
+```
+
+The documentation website for the API reveals that there is a limit of 5,000 API calls per day and an additional rate limitation of five requests per second. Thus, I defined an initial time limit for API calls to not encounter any error messages on this behalf.
+
+Furthermore, I copied the API key provided by *ticketmaster.com* on their website to a separate R-script as it is usually done due to security reasons. Calling this specific script, the key is then easily integrated into the current environment. In order to replicate my results, one has to assign the copied API key to a variable called ``api_key`` in a separate script called *api_key_ticketmaster.R*.
+
+```{r api_setup, error = FALSE, warning = FALSE, message = FALSE}
+
+sleep <- 0.21
+
+source("api_key_ticketmaster.R")
 
 ```
 
 
 ## 3. Interacting with the API - the basics
 
-Text
+Based on the documentation on the website, I used the URL below in combination with restrictions on the parameters *countryCode* and *locale* to retrieve the desired data frame. The content ``json_parsed_search`` from the response object ``get_search_result`` consists of a lists of lists. The variables, which are relevant for this task, are stored in the data frame ``venues`` of the list object ``_embedded``. Since the data frame ``venues`` itself consists of multiple data frames, the focal variables have to be extracted specifically.
 
-```{r start, error = FALSE, warning = FALSE, message = FALSE}
+```{r venue_data_3, error = FALSE, warning = FALSE, message = FALSE}
 
+get_search_result <- GET("https://app.ticketmaster.com/discovery/v2/venues.json",
+                         query = list(apikey = api_key,
+                                      countryCode = "DE",
+                                      locale = "*"))
 
+json_parsed_search <- fromJSON(content(get_search_result, as = "text"))
+glimpse(json_parsed_search)
+
+venue_data <- data.frame(
+  name = json_parsed_search[["_embedded"]]$venues$name,
+  city = json_parsed_search[["_embedded"]]$venues$city$name,
+  postalCode = json_parsed_search[["_embedded"]]$venues$postalCode,
+  address = json_parsed_search[["_embedded"]]$venues$address$line1,
+  url = json_parsed_search[["_embedded"]]$venues$url,
+  longitude = as.double(json_parsed_search[["_embedded"]]$venues$location$longitude),
+  latitude = as.double(json_parsed_search[["_embedded"]]$venues$location$latitude)
+  )
+
+glimpse(venue_data)
 
 ```
 
@@ -41,7 +78,7 @@ Text
 
 Text
 
-```{r start, error = FALSE, warning = FALSE, message = FALSE}
+```{r ex4, error = FALSE, warning = FALSE, message = FALSE}
 
 
 
@@ -52,7 +89,7 @@ Text
 
 Text
 
-```{r start, error = FALSE, warning = FALSE, message = FALSE}
+```{r ex5, error = FALSE, warning = FALSE, message = FALSE}
 
 
 
@@ -63,7 +100,7 @@ Text
 
 Text
 
-```{r start, error = FALSE, warning = FALSE, message = FALSE}
+```{r ex6, error = FALSE, warning = FALSE, message = FALSE}
 
 
 
