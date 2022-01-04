@@ -1,0 +1,70 @@
+---
+title: 'Assignment V: GitHub and the ticketmaster.com API'
+subtitle: 'Data Science Project Management | Winter Term 2021/22'
+author: "Stefan Glaisner (4222790)"
+date: "`r format(Sys.Date(), '%d-%m-%Y')`"
+output:
+  rmdformats::downcute:
+    code_folding: hide
+---
+
+I hereby confirm that I worked on this Assignment entirely on my own and that my submission is in line with the *Code of Conduct* outlined on the lecture slides.
+
+## 1. Setting up a new GitHub repository
+
+Text
+
+
+## 2. Getting to know the API
+
+Text
+
+```{r start, error = FALSE, warning = FALSE, message = FALSE}
+
+
+
+```
+
+
+## 3. Interacting with the API - the basics
+
+Text
+
+```{r start, error = FALSE, warning = FALSE, message = FALSE}
+
+
+
+```
+
+
+## 4. Interacting with the API - advanced
+
+Text
+
+```{r start, error = FALSE, warning = FALSE, message = FALSE}
+
+
+
+```
+
+
+## 5. Visualizing the extracted data
+
+Text
+
+```{r start, error = FALSE, warning = FALSE, message = FALSE}
+
+
+
+```
+
+
+## 6. Event locations in other countries
+
+Text
+
+```{r start, error = FALSE, warning = FALSE, message = FALSE}
+
+
+
+```
