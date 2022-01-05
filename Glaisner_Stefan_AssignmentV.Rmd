@@ -84,7 +84,7 @@ json_parsed_search[["page"]]
 
 ```
 
-As in [exercise 6]{#ex6} the same task has to be done for a second country, I decided to write a function ``ticketmaster_call`` which can then be easily applied to a country of choice. different exercises.
+As in [exercise 6]{#ex6} the same task has to be done for a second country, I decided to write a function ``ticketmaster_call`` which can then be easily applied to a country of choice. The function basically consists of an initial GET request that extracts general information about the venues contained in this specific API subset, which are then used to define the parameters of a ``for`` loop that runs through all the results pages. Since the last page is likely to contain less entries than the previous one, the information from this  page is extracted separately outside the loop.
 
 ```{r function_ex4, error = FALSE, warning = FALSE, message = FALSE}
 
@@ -104,6 +104,8 @@ ticketmaster_call <- function(api_key, country_code){
   
   last_page <- n_entries + per_page - n_pages*per_page  # number of cases at last page
   
+  check_success <- rep(NA, n_pages)  # initialize vector that stores the status code of each GET request
+  
   # initialize target data frame
   target_df <- data.frame(
       name = character(n_entries),
@@ -115,7 +117,7 @@ ticketmaster_call <- function(api_key, country_code){
       latitude = double(n_entries)
       )
   
-  # pause calls to not exceed time limit
+  # pause next GET request for some time to not exceed the time limit
   Sys.sleep(sleep)
   
   # looping over all complete pages
@@ -126,6 +128,8 @@ ticketmaster_call <- function(api_key, country_code){
                                                countryCode = country_code,
                                                locale = "*",
                                                page = i))
+    
+    check_success[(i+1)] <- get_search_result_loop[["status_code"]] # extract status code
     
     json_parsed_search_loop <- fromJSON(content(get_search_result_loop, as = "text"))
     
@@ -213,6 +217,8 @@ ticketmaster_call <- function(api_key, country_code){
                                                locale = "*",
                                                page = (n_pages-1)))
   
+  check_success[n_pages] <- get_search_result_loop[["status_code"]] # extract status code
+  
   json_parsed_search_last <- fromJSON(content(get_search_result_last, as = "text"))
     
   row_number_last <- (n_entries - last_page + 1):n_entries
@@ -291,6 +297,11 @@ ticketmaster_call <- function(api_key, country_code){
   
 }
 
+```
+
+The resulting data frame contains more rows than the example data frame in the Assignment Instructions indicating that some venues have been added to the API since the PDF document was created.
+
+```{r result_ex4, error = FALSE, warning = FALSE, message = FALSE}
 
 venue_total_DE <- ticketmaster_call(api_key, "DE")
 
