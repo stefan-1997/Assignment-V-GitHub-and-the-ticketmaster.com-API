@@ -28,7 +28,6 @@ library(tidyverse)
 library(httr)
 library(jsonlite)
 library(maps)
-library(dplyr)
 
 ```
 
@@ -312,11 +311,26 @@ glimpse(venue_total_DE)
 
 ## 5. Visualizing the extracted data
 
-Text
+Some coordinates in the variables ``longitude`` and ``latitude`` lie way beyond the German borders and can be assumed to be faulty. For instance, there are `r nrow(venue_total_DE[venue_total_DE$latitude == 0.000000,])` cases with ``latitude`` equal to 0. Of course, this is impossible since Germany is not even close to the equator. Thus, these outliers are coded as NAs.
 
 ```{r ex5, error = FALSE, warning = FALSE, message = FALSE}
 
+venue_total_DE$longitude[venue_total_DE$longitude < 5.866944 | venue_total_DE$longitude > 15.043611] <- NA
+venue_total_DE$latitude[venue_total_DE$latitude < 47.271679 | venue_total_DE$latitude > 55.0846] <- NA
 
+plot_ex5_DE <- ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = group),
+               data = map_data("world", region = "Germany"),
+               fill = "grey90", color = "#D63D1C") +
+  theme_void() +
+  coord_quickmap() +
+  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = "bold"),
+        plot.caption = element_text(face = "italic", colour = "#B0A505")) +
+  geom_point(aes(x = longitude, y = latitude), data = venue_total_DE,
+             alpha = 0.2, col = "#D63D1C")
+
+plot_ex5_DE
 
 ```
 
