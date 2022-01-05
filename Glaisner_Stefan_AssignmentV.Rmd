@@ -31,13 +31,13 @@ library(maps)
 
 ```
 
-The documentation website for the API reveals that there is a limit of 5,000 API calls per day and an additional rate limitation of five requests per second. Thus, I defined an initial time limit for API calls to not encounter any error messages on this behalf.
+The documentation website for the API reveals that there is a limit of 5,000 API calls per day and an additional rate limitation of five requests per second. Thus, one would usually define an initial time limit of 0.2 seconds for API calls to not encounter any error messages on this behalf. However, while intensively working with the API, I noticed that with such a short time limit, errors with the status code 429 ('Too Many Requests') are likely to occur. Accordingly, I set the pause time somewhat higher.
 
 Furthermore, I copied the API key provided by *ticketmaster.com* on their website to a separate R-script as it is usually done due to security reasons. Calling this specific script, the key is then easily integrated into the current environment. In order to replicate my results, one has to assign the copied API key to a variable called ``api_key`` in a separate script called *api_key_ticketmaster.R*.
 
 ```{r api_setup, error = FALSE, warning = FALSE, message = FALSE}
 
-sleep <- 0.25
+sleep <- 0.4
 
 source("api_key_ticketmaster.R")
 
@@ -48,7 +48,7 @@ source("api_key_ticketmaster.R")
 
 Based on the documentation on the website, I used the URL below in combination with restrictions on the parameters *countryCode* and *locale* to retrieve the desired data frame. The content ``json_parsed_search`` from the response object ``get_search_result`` consists of a lists of lists. The variables, which are relevant for this task, are stored in the data frame ``venues`` of the list object ``_embedded``. Since the data frame ``venues`` itself consists of multiple data frames, the focal variables have to be extracted specifically.
 
-```{r venue_data_3, error = FALSE, warning = FALSE, message = FALSE}
+```{r venue_data_ex3, error = FALSE, warning = FALSE, message = FALSE}
 
 get_search_result <- GET("https://app.ticketmaster.com/discovery/v2/venues.json",
                          query = list(apikey = api_key,
@@ -84,6 +84,8 @@ json_parsed_search[["page"]]
 ```
 
 As in [exercise 6]{#ex6} the same task has to be done for a second country, I decided to write a function ``ticketmaster_call`` which can then be easily applied to a country of choice. The function basically consists of an initial GET request that extracts general information about the venues contained in this specific API subset, which are then used to define the parameters of a ``for`` loop that runs through all the results pages. Since the last page is likely to contain less entries than the previous one, the information from this  page is extracted separately outside the loop.
+
+``ticketmaster_call`` returns a list object containing the final data frame with the specified variables, a vector including the status codes of all GET requests and a list with some meta information such as the number of pages and cases. 
 
 ```{r function_ex4, error = FALSE, warning = FALSE, message = FALSE}
 
@@ -292,18 +294,25 @@ ticketmaster_call <- function(api_key, country_code){
     
   }
 
-  return(target_df)
+  return(
+    list(data = target_df, status_check = check_success, meta = list(cases = n_entries,
+                                                                     pages = n_pages,
+                                                                     cases_per_page = per_page,
+                                                                     last_page = last_page)))
   
 }
 
 ```
 
-The resulting data frame contains more rows than the example data frame in the Assignment Instructions indicating that some venues have been added to the API since the PDF document was created.
+The check of the status code vector reveals that all GET requests were successful. As expected, the resulting data frame contains more rows than the example data frame in the *Assignment Instructions* indicating that some venues have been added to the API since the PDF document was created.
 
 ```{r result_ex4, error = FALSE, warning = FALSE, message = FALSE}
 
-venue_total_DE <- ticketmaster_call(api_key, "DE")
+call_DE <- ticketmaster_call(api_key, "DE")
 
+sum(call_DE$status_check != 200)
+
+venue_total_DE <- call_DE$data
 glimpse(venue_total_DE)
 
 ```
@@ -313,7 +322,7 @@ glimpse(venue_total_DE)
 
 Some coordinates in the variables ``longitude`` and ``latitude`` lie way beyond the German borders and can be assumed to be faulty. For instance, there are `r nrow(venue_total_DE[venue_total_DE$latitude == 0.000000,])` cases with ``latitude`` equal to 0. Of course, this is impossible since Germany is not even close to the equator. Thus, these outliers are coded as NAs.
 
-```{r ex5, error = FALSE, warning = FALSE, message = FALSE}
+```{r plot_ex5, error = FALSE, warning = FALSE, message = FALSE}
 
 venue_total_DE$longitude[venue_total_DE$longitude < 5.866944 | venue_total_DE$longitude > 15.043611] <- NA
 venue_total_DE$latitude[venue_total_DE$latitude < 47.271679 | venue_total_DE$latitude > 55.0846] <- NA
@@ -325,8 +334,8 @@ plot_ex5_DE <- ggplot() +
   theme_void() +
   coord_quickmap() +
   labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
-  theme(title = element_text(size = 8, face = "bold"),
-        plot.caption = element_text(face = "italic", colour = "#B0A505")) +
+  theme(plot.title = element_text(hjust = 0.5, size = 10, face = "bold", colour = "black"),
+        plot.caption = element_text(size = 8, face = "italic", colour = "#B0A505")) +
   geom_point(aes(x = longitude, y = latitude), data = venue_total_DE,
              alpha = 0.2, col = "#D63D1C")
 
@@ -337,10 +346,63 @@ plot_ex5_DE
 
 ## 6. Event locations in other countries {#ex6}
 
-Text
+I decided to apply the same operations to the country of Sweden.
 
-```{r ex6, error = FALSE, warning = FALSE, message = FALSE}
+```{r venue_data_ex6, error = FALSE, warning = FALSE, message = FALSE}
 
+get_search_result_ex6 <- GET("https://app.ticketmaster.com/discovery/v2/venues.json",
+                         query = list(apikey = api_key,
+                                      countryCode = "SE",
+                                      locale = "*"))
 
+json_parsed_search_ex6 <- fromJSON(content(get_search_result_ex6, as = "text"))
+
+venue_data_ex6 <- data.frame(
+  name = json_parsed_search_ex6[["_embedded"]]$venues$name,
+  city = json_parsed_search_ex6[["_embedded"]]$venues$city$name,
+  postalCode = json_parsed_search_ex6[["_embedded"]]$venues$postalCode,
+  address = json_parsed_search_ex6[["_embedded"]]$venues$address$line1,
+  url = json_parsed_search_ex6[["_embedded"]]$venues$url,
+  longitude = as.double(json_parsed_search_ex6[["_embedded"]]$venues$location$longitude),
+  latitude = as.double(json_parsed_search_ex6[["_embedded"]]$venues$location$latitude)
+  )
+
+glimpse(venue_data_ex6)
+
+```
+
+In order to extract all event locations I only had to change one parameter reaping the benefits from my clean code above.
+
+```{r result_ex6, error = FALSE, warning = FALSE, message = FALSE}
+
+call_SE <- ticketmaster_call(api_key, "SE")
+
+sum(call_SE$status_check != 200)
+
+venue_total_SE <- call_SE$data
+glimpse(venue_total_SE)
+
+```
+
+I adjusted the colors to match the Swedish flag:
+
+```{r plot_ex6, error = FALSE, warning = FALSE, message = FALSE}
+
+venue_total_SE$longitude[venue_total_SE$longitude < 10.9575 | venue_total_SE$longitude > 24.155833] <- NA
+venue_total_SE$latitude[venue_total_SE$latitude < 55.336944 | venue_total_SE$latitude > 69.06] <- NA
+
+plot_ex6_SE <- ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = group),
+               data = map_data("world", region = "Sweden"),
+               fill = "#C5D0EB", color = "#0C39A7") +
+  theme_void() +
+  coord_quickmap() +
+  labs(title = "Event locations across Sweden", caption = "Source: ticketmaster.com") +
+  theme(plot.title = element_text(hjust = 0.5, size = 10, face = "bold", colour = "#0C39A7"),
+        plot.caption = element_text(size = 8, face = "italic", colour = "#0C39A7")) +
+  geom_point(aes(x = longitude, y = latitude), data = venue_total_SE,
+             alpha = 0.2, col = "#F1F127")
+
+plot_ex6_SE
 
 ```
