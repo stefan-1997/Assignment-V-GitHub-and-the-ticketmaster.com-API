@@ -13,12 +13,12 @@ I hereby confirm that I worked on this Assignment entirely on my own and that my
 
 ## 1. Setting up a new GitHub repository
 
-After having registered on [GitHub](https://github.com), I initialized a new public repository for this assignment called [Assignment V GitHub and the ticketmaster.com API](https://github.com/stefan-1997/Assignment-V-GitHub-and-the-ticketmaster.com-API). For version control, I relied on the [Sourcetree GUI](https://www.sourcetreeapp.com/) for a convenient representation of the development history. To finally start over with the assignment, I cloned the Git repository to my local computer and pulled the latest version of the project (consisting of the *README.md* and the *.gitignore* file).
+After having registered on [GitHub](https://github.com), I initialized a new public repository for this assignment called [Assignment V GitHub and the ticketmaster.com API](https://github.com/stefan-1997/Assignment-V-GitHub-and-the-ticketmaster.com-API). For version control, I relied on the [Sourcetree GUI](https://www.sourcetreeapp.com/) for a convenient representation of the respective file histories. To finally start over with the assignment, I cloned the Git repository to my local computer and pulled the latest version of the project (consisting of the *README.md* and the *.gitignore* file).
 
 
 ## 2. Getting to know the API
 
-In the first lines of code in the *.Rmd* file of the newly generated *.Rproj*, I cleared my environment and loaded the relevant packages.
+Having added a fresh *.Rmd* file within a new R project to the repository, I was finally able to get started with the subsequent tasks. As a first step, I cleared my environment and loaded the relevant packages.
 
 ```{r start, error = FALSE, warning = FALSE, message = FALSE}
 
@@ -33,7 +33,7 @@ library(maps)
 
 The documentation website for the API reveals that there is a limit of 5,000 API calls per day and an additional rate limit of five requests per second. Thus, I defined a 'rest' time of 0.21 seconds between adjacent API calls to not encounter any error messages on this behalf.
 
-Furthermore, I copied the API key provided by *ticketmaster.com* on their website to a separate R-script as it is common practice due to security reasons. Calling this specific script, the key is then easily integrated into the current environment. In order to replicate my results, one has to assign the copied API key to a variable called ``api_key`` in a separate script called *api_key_ticketmaster.R*. By adding its name to the *.gitignore* file, I ensured that is does not become part of the GitHub repository.
+Furthermore, I copied the API key provided by *ticketmaster.com* on their website to a separate R-script as it is common practice due to security reasons. Calling this specific script, the key is then easily integrated into the current environment. In order to replicate my results, one has to assign the copied API key to a variable called ``api_key`` in a separate script called *api_key_ticketmaster.R*. By adding its name to the *.gitignore* file, I ensured that it does not become part of the GitHub repository.
 
 ```{r api_setup, error = FALSE, warning = FALSE, message = FALSE}
 
@@ -82,9 +82,9 @@ json_parsed_search[["page"]]
 
 ```
 
-As in exercise 6 the same task has to be done for a second country, I decided to write a function ``ticketmaster_call`` which can then be easily applied to a country of choice. The function basically consists of an initial GET request that extracts general information about the venues contained in this specific API subset, which can then be used to define the parameters of a for loop that iterates through all the results pages. Since the last page is likely to contain less entries than the previous ones, the information from this page is extracted separately outside the loop.
+As in exercise 6 the same task has to be done for a second country of choice, I decided to write a function called ``ticketmaster_call`` which can then be easily used to extract even location information for any country that is included in the API. The function basically consists of an initial GET request that extracts general information about the venues contained in this specific API subset, which can then be used to define the parameters of a for loop that iterates through all the results pages. Since the last page is likely to contain less entries than the previous ones, the information from this page is extracted separately outside the loop.
 
-While intensively working with the API, I noticed that even though I specified an appropriate request limit per second, errors with the status code 429 ('Too Many Requests') were likely to occur. Accordingly, I implemented a safety check which repeats the operation for those pages where the GET request was unsuccessful, albeit with a longer rest between the individual requests.
+While intensively working with the API, I noticed that even though I specified an appropriate request limit per second, errors with the status code 429 ('Too Many Requests') were likely to occur. Accordingly, I implemented a safety check which repeats the operation for those pages where the GET request was unsuccessful, albeit with a longer rest (2 seconds) between the single requests.
 
 ``ticketmaster_call`` returns a list object containing the final data frame with the specified variables, a vector including the status codes of all GET requests (before and after repeating unsuccessful GET requests) and a list with some meta information such as the number of pages and cases. 
 
@@ -455,7 +455,7 @@ plot_ex5_DE
 ```
 
 
-## 6. Event locations in other countries
+## 6. Event locations in Sweden
 
 I decided to apply the same operations to the country of Sweden.
 
@@ -482,7 +482,7 @@ glimpse(venue_data_ex6)
 
 ```
 
-In order to extract all event locations I only had to change one parameter reaping the benefits from my clean code above.
+In order to extract all event locations from the Scandinavian country, I only had to change the ``country_code`` parameter in the function from above reaping the benefits from my clean code.
 
 ```{r result_ex6, error = FALSE, warning = FALSE, message = FALSE}
 
